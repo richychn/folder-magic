@@ -11,3 +11,10 @@ wheels/
 AGENTS.md
 .env
 node_modules/
+
+CLAUDE.local.md
+.claude/local/
+
+# Integration test credentials
+backend/tests/integration/credentials.json
+backend/tests/integration/token.json
