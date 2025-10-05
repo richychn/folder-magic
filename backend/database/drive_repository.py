@@ -243,6 +243,7 @@ def _apply_create_folder(folder: DriveFolderNode, diff: Diff) -> None:
     # Find parent folder
     parent_result = _find_folder_by_id(folder, diff.parent_id)
     if parent_result is None:
+        print("no parent")
         return
 
     parent = parent_result
@@ -260,6 +261,7 @@ def _apply_create_folder(folder: DriveFolderNode, diff: Diff) -> None:
 
     # Add to parent
     parent.children_folders.append(new_folder)
+    print(parent)
 
 
 def _find_node_by_id(folder: DriveFolderNode, target_id: str) -> Optional[tuple]:
