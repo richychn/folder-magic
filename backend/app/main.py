@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+from .agents import router as agent_router
 from .api import auth, drive
 from .config import get_settings
 from .session import SessionStore
@@ -13,8 +14,6 @@ from .session import SessionStore
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name)
-
-    print("Allowed origins:", settings.resolved_origins())
 
     app.add_middleware(
         CORSMiddleware,
@@ -53,6 +52,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth.router)
     app.include_router(drive.router)
+    app.include_router(agent_router)
 
     @app.get("/healthz")
     def health_check() -> dict[str, str]:

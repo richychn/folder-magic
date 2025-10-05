@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     google_picker_api_key: str | None = None
     session_cleanup_seconds: int = 60 * 60 * 12
     allowed_origins: List[str] = []
+    openai_api_key: str
+    openai_model: str = "gpt-4o-mini"
+    openai_system_prompt: str = (
+        "You are a helpful assistant for the Repository Drive Explorer app. "
+        "Keep answers concise and reference Google Drive structures when applicable."
+    )
 
     @field_validator(
         "backend_origin",
@@ -39,6 +45,8 @@ class Settings(BaseSettings):
         "session_cookie_name",
         "session_secret_key",
         "google_picker_api_key",
+        "openai_model",
+        "openai_system_prompt",
         mode="before",
     )
     @classmethod
@@ -79,7 +87,7 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in raw.split(",") if origin.strip()]
         return value or []
 
-    @field_validator("google_client_id", "google_client_secret", "session_secret_key")
+    @field_validator("google_client_id", "google_client_secret", "session_secret_key", "openai_api_key")
     @classmethod
     def _ensure_not_empty(cls, value: str, info):  # type: ignore[override]
         if not value:

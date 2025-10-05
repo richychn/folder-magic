@@ -31,6 +31,12 @@ export GOOGLE_CLIENT_SECRET="<client-secret>"
 export SESSION_SECRET_KEY="<random-32-char-string>"
 export FRONTEND_ORIGIN="http://localhost:5173"
 export BACKEND_ALLOWED_ORIGINS="http://localhost:5173"
+export OPENAI_API_KEY="<openai-api-key>"
+# MongoDB connection string (e.g. mongodb://localhost:27017)
+export MONGODB_URI="<mongodb-uri>"
+# Optional overrides
+# export OPENAI_MODEL="gpt-4o-mini"
+# export OPENAI_SYSTEM_PROMPT="Custom agent instructions"
 # Optional: override session cookie settings in production
 # export SESSION_COOKIE_SECURE="true"
 ```
@@ -62,6 +68,8 @@ npm run dev
 2. Open `http://localhost:5173`.
 3. Sign in with Google (OAuth handled on the backend via httpOnly cookie).
 4. Launch the folder picker to choose a Drive folder; the page lists first-level subfolders and files with metadata.
+5. Visit `/agent` or use the "Chat with Agent" button on the Drive page to open the agent chat. The backend streams
+   responses using OpenAI; no tools are enabled yet.
 
 ## Testing & Formatting
 - Backend: add new tests with `pytest`. (No tests included yet.)
