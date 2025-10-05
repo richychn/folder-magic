@@ -6,7 +6,7 @@ class OperationResult(BaseModel):
     """Result of a single DiffList operation."""
     action_index: int
     action_type: Literal['move', 'rename', 'create_folder']
-    file_id: str
+    file_id: Optional[str] = None
     success: bool
     error_message: Optional[str] = None
     error_code: Optional[str] = None

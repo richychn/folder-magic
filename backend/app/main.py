@@ -14,6 +14,8 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name)
 
+    print("Allowed origins:", settings.resolved_origins())
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.resolved_origins(),
