@@ -1,5 +1,5 @@
 import pytest
-from backend.drive_operations import _build_result
+from backend.app.drive_operations import _build_result
 from backend.models import OperationResult, DiffListApplicationResult
 
 

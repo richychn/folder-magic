@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from backend.drive_operations import apply_difflist_to_drive, _execute_batch
+from backend.app.drive_operations import apply_difflist_to_drive, _execute_batch
 from backend.models.diff_list import DiffList, Diff
 from backend.models import OperationResult
 

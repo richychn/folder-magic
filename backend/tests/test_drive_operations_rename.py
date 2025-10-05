@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 from googleapiclient.errors import HttpError
-from backend.drive_operations import _create_rename_request
+from backend.app.drive_operations import _create_rename_request
 from backend.models.diff_list import Diff
 
 
