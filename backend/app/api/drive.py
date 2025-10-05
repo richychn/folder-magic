@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, status
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from ...database import drive_repository
 from ...models import Diff, DiffList
 from ...models.drive import DriveFileNode, DriveFolderNode
 from ..drive_operations import apply_difflist_to_drive
@@ -49,7 +50,6 @@ def _fetch_immediate_files(service, folder_id: str) -> list[DriveFileNode]:
     files: list[DriveFileNode] = []
     for item in items:
         if item.get("mimeType") == _FOLDER_MIME_TYPE:
-            # Second level stops at folders; skip deeper nesting.
             continue
         files.append(
             DriveFileNode(
@@ -172,14 +172,17 @@ def list_children(request: Request, folder_id: str = Query(..., alias="folderId"
     }
 
 
-@router.get("/initialize")
-def list_children(request: Request, folder_id: str = Query(..., alias="folderId")):
+@router.get("/initialize", response_model=DriveFolderNode)
+async def initialize_folder(request: Request, folder_id: str = Query(..., alias="folderId")):
     session_id, session = require_session(request)
     store = get_session_store(request)
     credentials = ensure_valid_credentials(session_id, session, store)
 
-    service = _build_drive_service(credentials)
+    email = session.user.get("email") if session.user else None
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User email unavailable")
 
+    service = _build_drive_service(credentials)
     try:
         root_metadata = (
             service.files()
@@ -190,7 +193,7 @@ def list_children(request: Request, folder_id: str = Query(..., alias="folderId"
             service.files()
             .list(
                 q=f"'{folder_id}' in parents and trashed = false",
-                fields="files(id,name,description,mimeType,parents,modifiedTime,size,iconLink,webViewLink)",
+                fields="files(id,name,description,mimeType,parents)",
                 orderBy="folder,name",
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
@@ -199,9 +202,11 @@ def list_children(request: Request, folder_id: str = Query(..., alias="folderId"
         )
     except HttpError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to query Drive API") from exc
-    
-    items = drive_response.get("files", [])
-    snapshot = _build_folder_snapshot(service, root_metadata, items)
+
+    snapshot = _build_folder_snapshot(service, root_metadata, drive_response.get("files", []))
+
+    await drive_repository.initialize(email=email, current=snapshot)
+
     return snapshot
 
 
@@ -213,7 +218,6 @@ def make_change(request: Request):
 
     service = _build_drive_service(credentials)
     try:
-        # Example change: Create a new folder in the root directory
         diff = Diff(action_type="create_folder", name="New Folder", parent_id="root")
         diff_list = DiffList(actions=[diff])
         print("Applying diff list:", diff_list)
