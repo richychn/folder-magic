@@ -1,4 +1,6 @@
 import type { DriveFile, DriveFolder } from "../types/drive";
+import { apiFetch } from "../api/client";
+import { useState } from "react";
 
 type DriveListProps = {
   folders: DriveFolder[];
@@ -31,6 +33,24 @@ function formatDate(value?: string) {
 }
 
 const DriveList = ({ folders, files }: DriveListProps) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCreateFolder = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await apiFetch("/api/drive/make_change", { method: "POST" });
+      // Success - you might want to refresh the folder list or show a success message
+    } catch (err) {
+      console.error(err);
+      setError((err as Error).message ?? "Failed to create folder");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-2">
       <section className="card">
@@ -86,6 +106,16 @@ const DriveList = ({ folders, files }: DriveListProps) => {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="card">
+        <header className="stack">
+          <h2>Make Change</h2>
+          <button onClick={handleCreateFolder} disabled={loading}>
+            {loading ? "Creating..." : "Create New Folder"}
+          </button>
+          {error ? <span className="notice">{error}</span> : null}
+        </header>
       </section>
     </div>
   );
