@@ -1,7 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "folder-magic"
+name = "folder-magic-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI backend for browsing Google Drive folders"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "authlib>=1.3.0",
+    "google-api-python-client>=2.119.0",
+    "google-auth>=2.29.0",
+    "google-auth-httplib2>=0.2.0",
+    "httpx>=0.27.0",
+    "itsdangerous>=2.1.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.3.0",
+    "pytest>=8.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["backend*"]
+
+[tool.uvicorn]
+factory = true
+app = "backend.app.main:create_app"
