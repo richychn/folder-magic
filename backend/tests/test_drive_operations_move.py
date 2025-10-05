@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 from googleapiclient.errors import HttpError
 from backend.drive_operations import _create_move_request
-from backend.diff_list import Diff
+from backend.models.diff_list import Diff
 
 
 @pytest.fixture
