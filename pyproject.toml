@@ -20,6 +20,7 @@ dependencies = [
     "pydantic>=2.6.0",
     "pydantic-settings>=2.2.0",
     "python-dotenv>=1.0.0",
+    "google-auth-oauthlib>=1.2.2",
 ]
 
 [project.optional-dependencies]
@@ -35,3 +36,8 @@ include = ["backend*"]
 [tool.uvicorn]
 factory = true
 app = "backend.app.main:create_app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]

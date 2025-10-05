@@ -26,7 +26,7 @@ def test_apply_difflist_none_service():
         apply_difflist_to_drive(None, difflist)
 
 
-@patch('backend.drive_operations._execute_batch')
+@patch('backend.app.drive_operations._execute_batch')
 def test_apply_difflist_single_batch(mock_execute_batch):
     """Test apply_difflist_to_drive with single batch (under 100 actions)."""
     mock_service = Mock()
@@ -57,7 +57,7 @@ def test_apply_difflist_single_batch(mock_execute_batch):
     assert result.failed_operations == 0
 
 
-@patch('backend.drive_operations._execute_batch')
+@patch('backend.app.drive_operations._execute_batch')
 def test_apply_difflist_multiple_batches(mock_execute_batch):
     """Test apply_difflist_to_drive with multiple batches (over 100 actions)."""
     mock_service = Mock()
@@ -104,7 +104,7 @@ def test_apply_difflist_multiple_batches(mock_execute_batch):
     assert result.failed_operations == 0
 
 
-@patch('backend.drive_operations._execute_batch')
+@patch('backend.app.drive_operations._execute_batch')
 def test_apply_difflist_partial_success(mock_execute_batch):
     """Test apply_difflist_to_drive with partial successes."""
     mock_service = Mock()
@@ -146,7 +146,7 @@ def test_apply_difflist_partial_success(mock_execute_batch):
     assert len(result.results) == 10
 
 
-@patch('backend.drive_operations._execute_batch')
+@patch('backend.app.drive_operations._execute_batch')
 def test_apply_difflist_mixed_action_types(mock_execute_batch):
     """Test apply_difflist_to_drive with mixed action types."""
     mock_service = Mock()
@@ -178,7 +178,7 @@ def test_apply_difflist_mixed_action_types(mock_execute_batch):
     assert result.results[2].new_file_id == 'new_id_123'
 
 
-@patch('backend.drive_operations._execute_batch')
+@patch('backend.app.drive_operations._execute_batch')
 def test_apply_difflist_result_ordering(mock_execute_batch):
     """Test that result ordering is preserved across batches."""
     mock_service = Mock()
