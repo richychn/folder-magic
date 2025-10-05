@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, HTTPException, Query, Request, status
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+from ..security import ensure_valid_credentials, get_session_store, require_session
+
+router = APIRouter(prefix="/api/drive", tags=["drive"])
+
+
+@router.get("/children")
+def list_children(request: Request, folder_id: str = Query(..., alias="folderId")):
+    session_id, session = require_session(request)
+    store = get_session_store(request)
+    credentials = ensure_valid_credentials(session_id, session, store)
+
+    service = build("drive", "v3", credentials=credentials, cache_discovery=False)
+    try:
+        drive_response = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and trashed = false",
+                fields="files(id,name,mimeType,modifiedTime,size,iconLink,webViewLink)",
+                orderBy="folder,name",
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+            )
+            .execute()
+        )
+    except HttpError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to query Drive API") from exc
+
+    items = drive_response.get("files", [])
+
+    folders = [item for item in items if item.get("mimeType") == "application/vnd.google-apps.folder"]
+    files = [item for item in items if item.get("mimeType") != "application/vnd.google-apps.folder"]
+
+    return {
+        "folderId": folder_id,
+        "folders": [
+            {
+                "id": entry.get("id"),
+                "name": entry.get("name"),
+                "mimeType": entry.get("mimeType"),
+                "iconLink": entry.get("iconLink"),
+                "webViewLink": entry.get("webViewLink"),
+            }
+            for entry in folders
+        ],
+        "files": [
+            {
+                "id": entry.get("id"),
+                "name": entry.get("name"),
+                "mimeType": entry.get("mimeType"),
+                "modifiedTime": entry.get("modifiedTime"),
+                "size": entry.get("size"),
+                "iconLink": entry.get("iconLink"),
+                "webViewLink": entry.get("webViewLink"),
+            }
+            for entry in files
+        ],
+    }
