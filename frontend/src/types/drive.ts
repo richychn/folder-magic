@@ -1,23 +1,15 @@
-export type DriveFolder = {
+export type DriveFileNode = {
   id: string;
   name: string;
-  mimeType?: string;
-  iconLink?: string;
-  webViewLink?: string;
+  parent_id?: string | null;
+  description?: string | null;
 };
 
-export type DriveFile = {
+export type DriveFolderNode = {
   id: string;
   name: string;
-  mimeType?: string;
-  modifiedTime?: string;
-  size?: string;
-  iconLink?: string;
-  webViewLink?: string;
-};
-
-export type DriveChildrenResponse = {
-  folderId: string;
-  folders: DriveFolder[];
-  files: DriveFile[];
+  parent_id?: string | null;
+  description?: string | null;
+  children_folders: DriveFolderNode[];
+  files: DriveFileNode[];
 };

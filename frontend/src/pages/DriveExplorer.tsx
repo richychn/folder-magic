@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../api/client";
 import PickerButton from "../components/PickerButton";
-import DriveList from "../components/DriveList";
 import { useAuth } from "../hooks/useAuth";
-import type { DriveChildrenResponse } from "../types/drive";
+import type { DriveFolderNode } from "../types/drive";
 
 type SelectedFolder = {
   id: string;
@@ -16,7 +15,7 @@ const DriveExplorerPage = () => {
   const navigate = useNavigate();
   const { user, authenticated, loading: authLoading, refresh } = useAuth();
   const [selectedFolder, setSelectedFolder] = useState<SelectedFolder | null>(null);
-  const [result, setResult] = useState<DriveChildrenResponse | null>(null);
+  const [snapshot, setSnapshot] = useState<DriveFolderNode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,20 +25,20 @@ const DriveExplorerPage = () => {
     }
   }, [authenticated, authLoading, navigate]);
 
-  const loadChildren = useCallback(async (folder: SelectedFolder) => {
+  const initializeFolder = useCallback(async (folder: SelectedFolder) => {
     setSelectedFolder(folder);
     setLoading(true);
     setError(null);
-    setResult(null);
+    setSnapshot(null);
 
     try {
-      const data = await apiFetch<DriveChildrenResponse>(
-        `/api/drive/children?folderId=${encodeURIComponent(folder.id)}`
+      const data = await apiFetch<DriveFolderNode>(
+        `/api/drive/initialize?folderId=${encodeURIComponent(folder.id)}`
       );
-      setResult(data);
+      setSnapshot(data);
     } catch (err) {
       console.error(err);
-      setError((err as Error).message ?? "Failed to load folder contents");
+      setError((err as Error).message ?? "Failed to build folder snapshot");
     } finally {
       setLoading(false);
     }
@@ -47,9 +46,9 @@ const DriveExplorerPage = () => {
 
   const handlePicked = useCallback(
     (folder: SelectedFolder) => {
-      void loadChildren(folder);
+      void initializeFolder(folder);
     },
-    [loadChildren]
+    [initializeFolder]
   );
 
   const handleLogout = useCallback(async () => {
@@ -61,6 +60,19 @@ const DriveExplorerPage = () => {
     }
   }, [navigate, refresh]);
 
+  const statistics = useMemo(() => {
+    if (!snapshot) {
+      return null;
+    }
+    const childFolders = snapshot.children_folders.length;
+    const rootFiles = snapshot.files.length;
+    const childFiles = snapshot.children_folders.reduce(
+      (count, folder) => count + folder.files.length,
+      0
+    );
+    return { childFolders, rootFiles, childFiles };
+  }, [snapshot]);
+
   return (
     <main className="stack">
       <header>
@@ -71,7 +83,7 @@ const DriveExplorerPage = () => {
               Viewing: {selectedFolder.name} ({selectedFolder.id})
             </span>
           ) : (
-            <span className="muted">Pick a folder to inspect its immediate children.</span>
+            <span className="muted">Pick a folder to generate its two-level snapshot.</span>
           )}
         </div>
         <div className="stack">
@@ -85,15 +97,29 @@ const DriveExplorerPage = () => {
       <section className="card stack">
         <h2>Select a folder</h2>
         <p className="muted">
-          The Google Picker opens a Drive prompt. Pick any folder (including Shared drives). We only fetch the
-          folder contents on demand—nothing is stored client-side.
+          The Google Picker opens a Drive prompt. Select a folder to build a snapshot that captures the folder and its
+          immediate children. We stop at the second level—grandchildren aren&apos;t expanded.
         </p>
         <PickerButton onPicked={handlePicked} disabled={loading} />
-        {loading ? <span className="muted">Loading folder contents...</span> : null}
+        {loading ? <span className="muted">Building snapshot...</span> : null}
         {error ? <span className="notice">{error}</span> : null}
       </section>
 
-      {result ? <DriveList folders={result.folders} files={result.files} /> : null}
+      {snapshot ? (
+        <section className="card stack">
+          <h2>Snapshot Ready</h2>
+          {statistics ? (
+            <p className="muted">
+              Root contains {statistics.childFolders} subfolders, {statistics.rootFiles} files at the root level, and
+              {statistics.childFiles} files within those subfolders.
+            </p>
+          ) : null}
+          <details>
+            <summary>View JSON snapshot</summary>
+            <pre>{JSON.stringify(snapshot, null, 2)}</pre>
+          </details>
+        </section>
+      ) : null}
     </main>
   );
 };
