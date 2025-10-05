@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     google_client_id: str
     google_client_secret: str
     google_scopes: List[str] = (
-        "openid email profile https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.readonly".split()
+        "openid email profile https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive".split()
     )
     google_picker_api_key: str | None = None
     session_cleanup_seconds: int = 60 * 60 * 12
