@@ -131,9 +131,11 @@ async def update(email: str, diff: DiffList) -> None:
         )
 
         logger.info(f"Updated proposed and diff for {email}")
+        print(f"Updated proposed and diff for {email}")
 
     except Exception as e:
         logger.error(f"Failed to update data for {email}: {e}")
+        print(f"Failed to update data for {email}: {e}")
         raise DatabaseConnectionError(f"Failed to update data: {e}")
 
 

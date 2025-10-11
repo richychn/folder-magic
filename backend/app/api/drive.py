@@ -231,6 +231,7 @@ async def initialize_folder(request: Request, folder_id: str = Query(..., alias=
     intro_message = (
         "You have been provided with a new Google Drive folder snapshot in JSON format. "
         "Acknowledge the data briefly and offer to help.\n"
+        f"User email: {email}\n"
         f"Snapshot:\n{snapshot_json}"
     )
 
