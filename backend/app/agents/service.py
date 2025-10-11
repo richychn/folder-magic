@@ -38,3 +38,20 @@ async def run_agent(
             yield str(output)
 
     return stream()
+
+
+async def run_agent_text(
+    session: OpenAIConversationsSession,
+    message: str,
+) -> str:
+    conversation_id = getattr(session, "conversation_id", None)
+    logger.info("agent run (text)", extra={"conversation_id": conversation_id, "message": message})
+
+    result = await Runner.run(
+        assistant_agent,
+        message,
+        session=session,
+    )
+
+    output = result.final_output
+    return output if isinstance(output, str) else str(output)

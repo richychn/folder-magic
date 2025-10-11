@@ -41,6 +41,17 @@ async def chat_endpoint(websocket: WebSocket):
     await websocket.accept()
     logger.info("websocket connected", extra={"session_id": session_id, "user": session.user.get("email")})
 
+    if session.pending_agent_messages:
+        logger.info(
+            "sending pending agent messages",
+            extra={"count": len(session.pending_agent_messages)},
+        )
+        for pending in session.pending_agent_messages:
+            await websocket.send_json({"type": "assistant", "delta": pending})
+            await websocket.send_json({"type": "assistant", "event": "done"})
+        session.pending_agent_messages.clear()
+        store.put(session_id, session)
+
     try:
         while True:
             payload = await websocket.receive_text()
