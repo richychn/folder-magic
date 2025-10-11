@@ -51,15 +51,22 @@ class Settings(BaseSettings):
     )
     @classmethod
     def _read_env_overrides(cls, value: str | None, info):  # type: ignore[override]
-        env_value = os.getenv(info.field_name.upper())
-        return env_value if env_value is not None else value
+        field_name = getattr(info, "field_name", None)
+        if isinstance(field_name, str):
+            env_value = os.getenv(field_name.upper())
+            if env_value is not None:
+                return env_value
+        return value
 
     @field_validator("session_cookie_max_age", "session_cleanup_seconds", mode="before")
     @classmethod
     def _convert_numeric(cls, value: int | str, info):  # type: ignore[override]
-        env_value = os.getenv(info.field_name.upper())
-        raw = env_value if env_value is not None else value
-        return int(raw)
+        field_name = getattr(info, "field_name", None)
+        if isinstance(field_name, str):
+            env_value = os.getenv(field_name.upper())
+            if env_value is not None:
+                return int(env_value)
+        return int(value)
 
     @field_validator("session_cookie_secure", mode="before")
     @classmethod

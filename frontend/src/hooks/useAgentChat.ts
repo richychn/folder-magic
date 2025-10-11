@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AgentSocketEvent, ChatMessage } from "../types/agent";
+type ChatRole = "user" | "assistant" | "system" | "event" | "error";
+
+export type ChatMessage = {
+  id: string;
+  role: ChatRole;
+  content: string;
+};
+
+type AgentSocketEvent =
+  | { type: "ack"; message: string }
+  | { type: "assistant"; delta?: string; event?: "done" }
+  | { type: "error"; message: string };
 
 const WS_PATH = "/api/agent/chat";
 
