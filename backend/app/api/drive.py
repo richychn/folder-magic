@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Iterable, Optional
 
+import json
+
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -11,6 +13,9 @@ from ...database import drive_repository
 from ...models import Diff, DiffList
 from ...models.drive import DriveFileNode, DriveFolderNode
 from ..drive_operations import apply_difflist_to_drive
+from agents import OpenAIConversationsSession
+
+from ..agents.service import run_agent_text
 from ..security import ensure_valid_credentials, get_session_store, require_session
 from ..utils.drive_descriptions import describe_file, describe_folder
 
@@ -218,6 +223,22 @@ async def initialize_folder(request: Request, folder_id: str = Query(..., alias=
     snapshot = _build_folder_snapshot(service, root_metadata, drive_response.get("files", []))
 
     await drive_repository.initialize(email=email, current=snapshot)
+
+    session.agent_session = OpenAIConversationsSession()
+
+    snapshot_json = json.dumps(snapshot.model_dump(), indent=2)
+    intro_message = (
+        "You have been provided with a new Google Drive folder snapshot in JSON format. "
+        "Acknowledge the data briefly and offer to help.\n"
+        f"Snapshot:\n{snapshot_json}"
+    )
+
+    try:
+        reply_text = await run_agent_text(session.agent_session, intro_message)
+        session.pending_agent_messages = [reply_text]
+        store.put(session_id, session)
+    except Exception as exc:  # pragma: no cover - defensive
+        _logger.exception("failed to prime agent with snapshot", exc_info=exc)
 
     return snapshot
 
