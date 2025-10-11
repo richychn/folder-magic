@@ -12,6 +12,7 @@ from ...models import Diff, DiffList
 from ...models.drive import DriveFileNode, DriveFolderNode
 from ..drive_operations import apply_difflist_to_drive
 from ..security import ensure_valid_credentials, get_session_store, require_session
+from ...database.drive_repository import read
 
 router = APIRouter(prefix="/api/drive", tags=["drive"])
 _logger = logging.getLogger(__name__)
@@ -208,6 +209,22 @@ async def initialize_folder(request: Request, folder_id: str = Query(..., alias=
     await drive_repository.initialize(email=email, current=snapshot)
 
     return snapshot
+
+
+@router.get("/structure")
+async def get_drive_structure(request: Request):
+    """Get the current drive structure from the database."""
+    session_id, session = require_session(request)
+
+    email = session.user.get("email") if session.user else None
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User email unavailable")
+
+    data = await drive_repository.read(email=email)
+
+    return {
+        "current_structure": data.get("current") if data else None,
+    }
 
 
 @router.post("/make_change")

@@ -1,8 +1,8 @@
 import json
 import asyncio
 from openai import OpenAI
-from ..app.tools import propose_actions_tool
-from ..app.tool_schema import ProposeActionsInput
+from backend.app.tools import propose_actions_tool
+from backend.app.tool_schema import ProposeActionsInput
 
 async def main():
     client = OpenAI()

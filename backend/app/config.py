@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List
 
 from dotenv import load_dotenv
-from pydantic import field_validator
+from pydantic import field_validator, ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load environment variables from the project .env (if present)
@@ -50,15 +50,20 @@ class Settings(BaseSettings):
         mode="before",
     )
     @classmethod
-    def _read_env_overrides(cls, value: str | None, info):  # type: ignore[override]
-        env_value = os.getenv(info.field_name.upper())
-        return env_value if env_value is not None else value
+    def _read_env_overrides(cls, value: str | None, info: ValidationInfo):
+        if info.field_name:
+            env_value = os.getenv(info.field_name.upper())
+            return env_value if env_value is not None else value
+        return value
 
     @field_validator("session_cookie_max_age", "session_cleanup_seconds", mode="before")
     @classmethod
-    def _convert_numeric(cls, value: int | str, info):  # type: ignore[override]
-        env_value = os.getenv(info.field_name.upper())
-        raw = env_value if env_value is not None else value
+    def _convert_numeric(cls, value: int | str, info: ValidationInfo):
+        if info.field_name:
+            env_value = os.getenv(info.field_name.upper())
+            raw = env_value if env_value is not None else value
+        else:
+            raw = value
         return int(raw)
 
     @field_validator("session_cookie_secure", mode="before")
@@ -89,9 +94,10 @@ class Settings(BaseSettings):
 
     @field_validator("google_client_id", "google_client_secret", "session_secret_key", "openai_api_key")
     @classmethod
-    def _ensure_not_empty(cls, value: str, info):  # type: ignore[override]
+    def _ensure_not_empty(cls, value: str, info: ValidationInfo):
         if not value:
-            raise ValueError(f"{info.field_name.upper()} must be configured in the environment")
+            field_name = info.field_name or "Field"
+            raise ValueError(f"{field_name.upper()} must be configured in the environment")
         return value
 
     def resolved_origins(self) -> List[str]:
