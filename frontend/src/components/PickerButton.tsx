@@ -5,6 +5,8 @@ import { apiFetch } from "../api/client";
 type PickerButtonProps = {
   onPicked: (folder: { id: string; name: string }) => void;
   disabled?: boolean;
+  buttonText?: string;
+  className?: string;
 };
 
 type PickerTokenResponse = {
@@ -62,7 +64,7 @@ async function loadPickerApi(): Promise<void> {
   }
 }
 
-const PickerButton = ({ onPicked, disabled }: PickerButtonProps) => {
+const PickerButton = ({ onPicked, disabled, buttonText, className }: PickerButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,9 +114,9 @@ const PickerButton = ({ onPicked, disabled }: PickerButtonProps) => {
   };
 
   return (
-    <div className="stack">
+    <div className={`stack ${className ?? ""}`}>
       <button onClick={openPicker} disabled={loading || disabled}>
-        {loading ? "Opening Picker..." : "Choose Google Drive Folder"}
+        {loading ? "Opening Picker..." : buttonText ?? "Choose Google Drive Folder"}
       </button>
       {error ? <span className="notice">{error}</span> : null}
     </div>

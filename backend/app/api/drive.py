@@ -17,6 +17,7 @@ from agents import OpenAIConversationsSession
 
 from ..agents.service import run_agent_text
 from ..security import ensure_valid_credentials, get_session_store, require_session
+from ...database.drive_repository import read
 from ..utils.drive_descriptions import describe_file, describe_folder
 
 router = APIRouter(prefix="/api/drive", tags=["drive"])
@@ -241,6 +242,22 @@ async def initialize_folder(request: Request, folder_id: str = Query(..., alias=
         _logger.exception("failed to prime agent with snapshot", exc_info=exc)
 
     return snapshot
+
+
+@router.get("/structure")
+async def get_drive_structure(request: Request):
+    """Get the current drive structure from the database."""
+    session_id, session = require_session(request)
+
+    email = session.user.get("email") if session.user else None
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User email unavailable")
+
+    data = await drive_repository.read(email=email)
+
+    return {
+        "current_structure": data.get("current") if data else None,
+    }
 
 
 @router.post("/make_change")
