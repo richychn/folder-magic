@@ -88,9 +88,12 @@ const DriveExplorerPage = () => {
         </div>
         <div className="stack">
           {user?.email ? <span className="tag">{user.email}</span> : null}
-          <button type="button" onClick={handleLogout}>
-            Sign out
-          </button>
+          <div className="actions">
+            <button type="button" onClick={() => navigate("/agent")}>Chat with Agent</button>
+            <button type="button" onClick={handleLogout}>
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
