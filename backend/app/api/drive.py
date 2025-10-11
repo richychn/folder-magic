@@ -257,22 +257,23 @@ async def get_drive_structure(request: Request):
 
     return {
         "current_structure": data.get("current") if data else None,
+        "proposed_structure": data.get("proposed") if data else None,
+        "diff_list": data.get("diff") if data else None
     }
 
 
 @router.post("/make_change")
-def make_change(request: Request):
+async def make_change(request: Request):
     session_id, session = require_session(request)
     store = get_session_store(request)
     credentials = ensure_valid_credentials(session_id, session, store)
 
     service = _build_drive_service(credentials)
+
     try:
-        diff = Diff(action_type="create_folder", name="New Folder", parent_id="root")
-        diff_list = DiffList(actions=[diff])
-        print("Applying diff list:", diff_list)
+        data = await request.json()
+        diff_list = DiffList.model_validate(data)
         result = apply_difflist_to_drive(service, diff_list)
-        print("Change result:", result)
-        return {"status": "success", "result": result}
+        return {"status": "success", "result": data}
     except HttpError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to make change in Drive") from exc

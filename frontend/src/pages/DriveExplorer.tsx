@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../api/client";
@@ -6,7 +6,7 @@ import AgentChatEmbed from "../components/AgentChatEmbed";
 import DriveList from "../components/DriveList";
 import PickerButton from "../components/PickerButton";
 import { useAuth } from "../hooks/useAuth";
-import type { DriveFolderNode, DriveStructureResponse } from "../types/drive";
+import type { DriveFolderNode, DriveStructureResponse, DiffList } from "../types/drive";
 
 type SelectedFolder = {
   id: string;
@@ -22,12 +22,20 @@ const DriveExplorerPage = () => {
 
   // State for drive structure from MongoDB
   const [driveStructure, setDriveStructure] = useState<DriveFolderNode | null>(null);
+  const [proposedStructure, setProposedStructure] = useState<DriveFolderNode | null>(null);
+  const [diffList, setDiffList] = useState<DiffList | null>(null);
   const [structureLoading, setStructureLoading] = useState(false);
   const [structureError, setStructureError] = useState<string | null>(null);
 
   // State for make change button
   const [makeChangeLoading, setMakeChangeLoading] = useState(false);
   const [makeChangeError, setMakeChangeError] = useState<string | null>(null);
+
+  const diffListRef = useRef<DiffList | null>(null);
+
+  useEffect(() => {
+    diffListRef.current = diffList;
+  }, [diffList]);
 
   useEffect(() => {
     if (!authLoading && !authenticated) {
@@ -43,6 +51,8 @@ const DriveExplorerPage = () => {
     try {
       const data = await apiFetch<DriveStructureResponse>("/api/drive/structure");
       setDriveStructure(data.current_structure);
+      setProposedStructure(data.proposed_structure);
+      setDiffList(data.diff_list);
     } catch (err) {
       console.error(err);
       const errorMessage = (err as Error).message ?? "Failed to fetch drive structure";
@@ -62,6 +72,38 @@ const DriveExplorerPage = () => {
       void fetchDriveStructure();
     }
   }, [authenticated, authLoading, fetchDriveStructure]);
+
+  useEffect(() => {
+    if (!selectedFolder) return; 
+
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    const pollApi = async () => {
+      try {
+        const data = await apiFetch<DriveStructureResponse>("/api/drive/structure");
+        if (isMounted) {
+          setDriveStructure(data.current_structure);
+          setProposedStructure(data.proposed_structure);
+          setDiffList(data.diff_list);
+          console.log("Received:", data);
+        }
+      } catch (err) {
+        console.error("Error polling API:", err);
+      } finally {
+        if (isMounted) {
+          timeoutId = setTimeout(pollApi, 10000);
+        }
+      }
+    };
+
+    pollApi(); // start polling
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [selectedFolder]);
 
   const initializeFolder = useCallback(async (folder: SelectedFolder) => {
     setSelectedFolder(folder);
@@ -103,7 +145,9 @@ const DriveExplorerPage = () => {
     setMakeChangeError(null);
 
     try {
-      await apiFetch("/api/drive/make_change", { method: "POST" });
+      console.log("Making change...")
+      console.log(diffListRef.current);
+      await apiFetch("/api/drive/make_change", { method: "POST", body: JSON.stringify(diffListRef.current) });
       // Refresh the drive structure after making changes
       await fetchDriveStructure();
     } catch (err) {
