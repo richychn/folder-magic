@@ -18,7 +18,7 @@ class SessionData:
     user: Dict[str, str]
     created_at: datetime = field(default_factory=datetime.utcnow)
     agent_session: OpenAIConversationsSession | None = None
-    agent_conversation_id: str | None = None
+    pending_agent_messages: list[str] = field(default_factory=list)
 
 
 class SessionStore:
