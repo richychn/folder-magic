@@ -29,7 +29,20 @@ export type DriveFolder = {
   webViewLink?: string;
 };
 
+export type Diff = {
+  action_type: string;
+  file_id: string;
+  parent_id: string;
+  name: string;
+}
+
+export type DiffList = {
+  actions: Diff[]
+}
+
 // Type for the API response from /api/drive/structure
 export type DriveStructureResponse = {
   current_structure: DriveFolderNode | null;
+  proposed_structure: DriveFolderNode | null;
+  diff_list: DiffList | null;
 };

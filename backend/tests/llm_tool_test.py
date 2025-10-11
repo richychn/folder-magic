@@ -22,7 +22,7 @@ async def main():
         model="gpt-5",
         messages=[
             {"role": "system", "content": "You are a helpful assistant that is helping the user organize their Google Drive."},
-            {"role": "user", "content": "for tjiang217@gmail.com move file id 1ZHM5nX4mzoLs6a26BUcSbl6PKJ5Y4pqmC1KAYfmlz6M to folder id 1yqIplLn9keODMIjNOy1V6o0U33_2i_NW and rename folder id 1SB6uExQHRknz8wz1Ui0xOAfh_TKQ8vxIltEjzqzBgPs to test123"},
+            {"role": "user", "content": "for richychentl@gmail.com create a new folder named test123 at parent id 1eDX6YOFL4Cf82e9gDuPIvLJlzBQ_-rEb"},
         ],
         tools=tools,
     )
