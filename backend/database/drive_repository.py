@@ -279,7 +279,7 @@ def _find_node_by_id(folder: DriveFolderNode, target_id: str) -> Optional[tuple]
     # Check if the folder itself is the target
     if folder.id == target_id:
         # Can't return parent for root, return None
-        return None
+        return (folder, None)
 
     # Search files in current folder
     for file in folder.files:
