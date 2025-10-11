@@ -7,6 +7,7 @@ from threading import Lock
 from typing import Dict, Optional
 
 from google.oauth2.credentials import Credentials
+from agents import OpenAIConversationsSession
 
 
 @dataclass
@@ -16,6 +17,8 @@ class SessionData:
     credentials: Credentials
     user: Dict[str, str]
     created_at: datetime = field(default_factory=datetime.utcnow)
+    agent_session: OpenAIConversationsSession | None = None
+    agent_conversation_id: str | None = None
 
 
 class SessionStore:

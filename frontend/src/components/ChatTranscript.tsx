@@ -1,4 +1,4 @@
-import type { ChatMessage } from "../types/agent";
+import type { ChatMessage } from "../hooks/useAgentChat";
 
 type ChatTranscriptProps = {
   messages: ChatMessage[];
