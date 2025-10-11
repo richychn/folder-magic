@@ -275,6 +275,6 @@ async def make_change(request: Request):
         data = await request.json()
         diff_list = DiffList.model_validate(data)
         result = apply_difflist_to_drive(service, diff_list)
-        return {"status": "success", "result": data}
+        return {"status": "success", "result": result}
     except HttpError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to make change in Drive") from exc

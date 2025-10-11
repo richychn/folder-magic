@@ -155,6 +155,7 @@ const DriveExplorerPage = () => {
       setMakeChangeError((err as Error).message ?? "Failed to create folder");
     } finally {
       setMakeChangeLoading(false);
+      window.location.reload();
     }
   }, [fetchDriveStructure]);
 
