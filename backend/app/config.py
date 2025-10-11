@@ -34,11 +34,6 @@ class Settings(BaseSettings):
     allowed_origins: List[str] = []
     openai_api_key: str
     openai_model: str = "gpt-4o-mini"
-    openai_system_prompt: str = (
-        "You are a helpful assistant for the Repository Drive Explorer app. "
-        "Keep answers concise and reference Google Drive structures when applicable."
-    )
-
     @field_validator(
         "backend_origin",
         "frontend_origin",
@@ -46,7 +41,6 @@ class Settings(BaseSettings):
         "session_secret_key",
         "google_picker_api_key",
         "openai_model",
-        "openai_system_prompt",
         mode="before",
     )
     @classmethod

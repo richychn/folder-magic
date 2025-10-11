@@ -3,17 +3,43 @@ from __future__ import annotations
 import logging
 from typing import AsyncGenerator
 
+from pathlib import Path
+
 from agents import Agent, Runner, OpenAIConversationsSession
+from agents.tool import function_tool
 
 from ..config import get_settings
+from ..tools import propose_actions_tool, read_drive_tool
 
 logger = logging.getLogger(__name__)
 
 _settings = get_settings()
 
+PROMPT_PATH = Path(__file__).resolve().parent / "prompt" / "system_prompt.txt"
+
+with PROMPT_PATH.open("r", encoding="utf-8") as prompt_file:
+    SYSTEM_PROMPT = prompt_file.read().strip()
+
+_read_drive_function_tool = function_tool(
+    name_override="read_drive_tool",
+    description_override="Fetch current, proposed, and diff structures for a user email.",
+    use_docstring_info=False,
+)(read_drive_tool)
+
+_propose_actions_function_tool = function_tool(
+    name_override="propose_actions_tool",
+    description_override="Validate and persist Drive change proposals for a user email.",
+    use_docstring_info=False,
+)(propose_actions_tool)
+
+
 assistant_agent = Agent(
     name="Repository Assistant",
-    instructions=_settings.openai_system_prompt,
+    instructions=SYSTEM_PROMPT,
+    tools=[
+        _read_drive_function_tool,
+        _propose_actions_function_tool,
+    ],
 )
 
 

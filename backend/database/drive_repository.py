@@ -131,9 +131,11 @@ async def update(email: str, diff: DiffList) -> None:
         )
 
         logger.info(f"Updated proposed and diff for {email}")
+        print(f"Updated proposed and diff for {email}")
 
     except Exception as e:
         logger.error(f"Failed to update data for {email}: {e}")
+        print(f"Failed to update data for {email}: {e}")
         raise DatabaseConnectionError(f"Failed to update data: {e}")
 
 
@@ -277,7 +279,7 @@ def _find_node_by_id(folder: DriveFolderNode, target_id: str) -> Optional[tuple]
     # Check if the folder itself is the target
     if folder.id == target_id:
         # Can't return parent for root, return None
-        return None
+        return (folder, None)
 
     # Search files in current folder
     for file in folder.files:
