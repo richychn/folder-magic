@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../api/client";
+import AgentChatEmbed from "../components/AgentChatEmbed";
 import DriveList from "../components/DriveList";
 import PickerButton from "../components/PickerButton";
 import { useAuth } from "../hooks/useAuth";
@@ -142,7 +143,13 @@ const DriveExplorerPage = () => {
         <div className="stack">
           {user?.email ? <span className="tag">{user.email}</span> : null}
           <div className="actions">
-            <button type="button" onClick={() => navigate("/agent")}>Chat with Agent</button>
+            {selectedFolder ? (
+              <>
+                <PickerButton onPicked={handlePicked} buttonText="Change Folder" disabled={loading} />
+                {loading ? <span className="muted">Building snapshot...</span> : null}
+                {error ? <span className="notice" style={{ fontSize: "0.85rem" }}>{error}</span> : null}
+              </>
+            ) : null}
             <button type="button" onClick={handleLogout}>
               Sign out
             </button>
@@ -150,64 +157,75 @@ const DriveExplorerPage = () => {
         </div>
       </header>
 
-      <section className="card stack">
-        <h2>Select a folder</h2>
-        <p className="muted">
-          The Google Picker opens a Drive prompt. Select a folder to build a snapshot that captures the folder and its
-          immediate children. We stop at the second level—grandchildren aren&apos;t expanded.
-        </p>
-        <PickerButton onPicked={handlePicked} disabled={loading} />
-        {loading ? <span className="muted">Building snapshot...</span> : null}
-        {error ? <span className="notice">{error}</span> : null}
-      </section>
+      {!selectedFolder ? (
+        <section className="card stack">
+          <h2>Select a folder</h2>
+          <p className="muted">
+            The Google Picker opens a Drive prompt. Select a folder to build a snapshot that captures the folder and its
+            immediate children. We stop at the second level—grandchildren aren&apos;t expanded.
+          </p>
+          <PickerButton onPicked={handlePicked} disabled={loading} />
+          {loading ? <span className="muted">Building snapshot...</span> : null}
+          {error ? <span className="notice">{error}</span> : null}
+        </section>
+      ) : null}
 
-      <section className="card stack">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2>Your Drive Structure</h2>
-          <button type="button" onClick={handleMakeChange} disabled={makeChangeLoading}>
-            {makeChangeLoading ? "Creating..." : "Create New Folder"}
-          </button>
+      {selectedFolder ? (
+        <div className="split-layout">
+          <div className="split-pane split-pane-left">
+            <AgentChatEmbed />
+          </div>
+          <div className="split-pane split-pane-right">
+            <section className="card stack">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h2>Your Drive Structure</h2>
+                <button type="button" onClick={handleMakeChange} disabled={makeChangeLoading}>
+                  {makeChangeLoading ? "Making Changes..." : "Make Changes"}
+                </button>
+              </div>
+              {makeChangeError ? <span className="notice">{makeChangeError}</span> : null}
+              {structureLoading ? (
+                <div className="stack">
+                  <span className="muted">Loading your drive structure...</span>
+                </div>
+              ) : structureError ? (
+                <div className="stack">
+                  <span className="notice">{structureError}</span>
+                  <button type="button" onClick={() => void fetchDriveStructure()}>
+                    Retry
+                  </button>
+                </div>
+              ) : !driveStructure ? (
+                <div className="stack">
+                  <p className="muted">No drive structure found.</p>
+                  <p className="muted">
+                    Use the folder picker above to scan a folder and save its structure to the database.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {statistics ? (
+                    <p className="muted">
+                      Root contains {statistics.childFolders} subfolders, {statistics.rootFiles} files at the root level, and{" "}
+                      {statistics.childFiles} files within those subfolders.
+                    </p>
+                  ) : null}
+                  <DriveList
+                    folders={driveStructure.children_folders.map((folder) => ({
+                      id: folder.id,
+                      name: folder.name,
+                    }))}
+                    files={driveStructure.files.map((file) => ({
+                      id: file.id,
+                      name: file.name,
+                    }))}
+                  />
+                </>
+              )}
+            </section>
+          </div>
         </div>
-        {makeChangeError ? <span className="notice">{makeChangeError}</span> : null}
-        {structureLoading ? (
-          <div className="stack">
-            <span className="muted">Loading your drive structure...</span>
-          </div>
-        ) : structureError ? (
-          <div className="stack">
-            <span className="notice">{structureError}</span>
-            <button type="button" onClick={() => void fetchDriveStructure()}>
-              Retry
-            </button>
-          </div>
-        ) : !driveStructure ? (
-          <div className="stack">
-            <p className="muted">No drive structure found.</p>
-            <p className="muted">
-              Use the folder picker above to scan a folder and save its structure to the database.
-            </p>
-          </div>
-        ) : (
-          <>
-            {statistics ? (
-              <p className="muted">
-                Root contains {statistics.childFolders} subfolders, {statistics.rootFiles} files at the root level, and{" "}
-                {statistics.childFiles} files within those subfolders.
-              </p>
-            ) : null}
-            <DriveList
-              folders={driveStructure.children_folders.map((folder) => ({
-                id: folder.id,
-                name: folder.name,
-              }))}
-              files={driveStructure.files.map((file) => ({
-                id: file.id,
-                name: file.name,
-              }))}
-            />
-          </>
-        )}
-      </section>
+      ) : null}
     </main>
   );
 };

@@ -215,3 +215,22 @@ header {
 .chat-status.error span.indicator {
   background: #ef4444;
 }
+
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.split-pane {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 767px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+}

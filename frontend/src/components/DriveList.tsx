@@ -33,7 +33,7 @@ function formatDate(value?: string) {
 const DriveList = ({ folders, files }: DriveListProps) => {
 
   return (
-    <div className="grid grid-cols-2">
+    <div className="stack">
       <section className="card">
         <header className="stack">
           <h2>Subfolders</h2>
