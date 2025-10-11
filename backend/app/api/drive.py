@@ -12,6 +12,7 @@ from ...models import Diff, DiffList
 from ...models.drive import DriveFileNode, DriveFolderNode
 from ..drive_operations import apply_difflist_to_drive
 from ..security import ensure_valid_credentials, get_session_store, require_session
+from ..utils.drive_descriptions import describe_file, describe_folder
 
 router = APIRouter(prefix="/api/drive", tags=["drive"])
 _logger = logging.getLogger(__name__)
@@ -51,12 +52,13 @@ def _fetch_immediate_files(service, folder_id: str) -> list[DriveFileNode]:
     for item in items:
         if item.get("mimeType") == _FOLDER_MIME_TYPE:
             continue
+        name = item.get("name", "")
         files.append(
             DriveFileNode(
                 id=item.get("id", ""),
-                name=item.get("name", ""),
+                name=name,
                 parent_id=_safe_parent_id(item, folder_id),
-                description=item.get("description"),
+                description=describe_file(name),
             )
         )
     return files
@@ -76,17 +78,22 @@ def _build_folder_snapshot(service, root_metadata: dict, child_items: list[dict]
                 id=folder_id,
                 name=item.get("name", ""),
                 parent_id=parent_id,
-                description=item.get("description"),
+                description=None,
             )
             folder_node.files = _fetch_immediate_files(service, folder_id)
+            folder_node.description = describe_folder(
+                folder_node.name,
+                [file.name for file in folder_node.files],
+            )
             child_folder_nodes.append(folder_node)
         else:
+            name = item.get("name", "")
             root_files.append(
                 DriveFileNode(
                     id=item.get("id", ""),
-                    name=item.get("name", ""),
+                    name=name,
                     parent_id=parent_id,
-                    description=item.get("description"),
+                    description=describe_file(name),
                 )
             )
 
@@ -94,9 +101,14 @@ def _build_folder_snapshot(service, root_metadata: dict, child_items: list[dict]
         id=root_id,
         name=root_metadata.get("name", ""),
         parent_id=_safe_parent_id(root_metadata),
-        description=root_metadata.get("description"),
+        description=None,
         children_folders=child_folder_nodes,
         files=root_files,
+    )
+
+    folder_node.description = describe_folder(
+        folder_node.name,
+        [file.name for file in root_files],
     )
 
     _logger.info(
